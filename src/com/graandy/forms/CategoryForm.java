@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -33,7 +34,7 @@ public class CategoryForm {
 	 * Launch the application.
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	/*public static void main(String[] args) {
 		try {
 			CategoryForm window = new CategoryForm();
 			window.open();
@@ -41,10 +42,11 @@ public class CategoryForm {
 			e.printStackTrace();
 		}
 		
-	}
+	}*/
 
 	/**
 	 * Open the window.
+	 * @wbp.parser.entryPoint
 	 */
 	public void open() {
 		Display display = Display.getDefault();
@@ -74,6 +76,9 @@ public class CategoryForm {
 		text.setBounds(67, 91, 143, 26);
 		final Combo combo = new Combo(shell, SWT.READ_ONLY);
 		combo.setBounds(67, 288, 143, 28);
+		final List list = new List(shell, SWT.BORDER);
+		list.setBounds(437, 104, 281, 353);
+		listUpdate(list);
 		Button btnNewButton = new Button(shell, SWT.NONE);
 		btnNewButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -111,6 +116,7 @@ public class CategoryForm {
 							mb.open();
 							conn.close();
 							comboUpdate(combo);
+							listUpdate(list);
 						} catch (SQLException e4) {
 							// TODO Auto-generated catch block
 							MessageBox mb = new MessageBox(shell);
@@ -191,6 +197,57 @@ public class CategoryForm {
 		label_1.setText("\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043F\u043E\u0434\u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438");
 		
 		comboUpdate(combo);
+		
+
+		Button button_1 = new Button(shell, SWT.NONE);
+		button_1.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String f = list.getItem(list.getFocusIndex()).toString();
+				try{
+					Class.forName("org.h2.Driver");
+					conn = DriverManager.getConnection("jdbc:h2:file://C:\\Java\\menu;MV_STORE=FALSE", "sa", "");
+					
+					conn.setAutoCommit(false);		
+					String sql = "select id from category where category_name = ?";
+					PreparedStatement stmt = conn.prepareStatement(sql);
+					stmt.setString(1, f);
+					rs = stmt.executeQuery();
+					int id = 0;
+					while(rs.next())		
+					id = rs.getInt("id");				
+			        conn.commit();	
+			        conn.close();
+			        conn = null;
+			    	try {
+						
+						ListProduct window4 = new ListProduct();				
+						window4.open(id, f);
+					} catch (Exception e3) {
+						e3.printStackTrace();
+					}
+				}
+				catch(SQLException | ClassNotFoundException e7){
+					MessageBox mb = new MessageBox(shell);
+					mb.setMessage("Не могу открыть файл");
+					mb.open();
+				}
+				finally{
+					if (conn!= null)
+						try {
+							conn.close();
+						} catch (SQLException e7) {
+							// TODO Auto-generated catch block
+							MessageBox mb = new MessageBox(shell);
+							mb.setMessage("Соединение уже закрыто");
+							mb.open();
+						}
+				}	
+				
+			}
+		});
+		button_1.setBounds(434, 50, 90, 30);
+		button_1.setText("\u0412\u044B\u0431\u0440\u0430\u0442\u044C");
 
 		
 		
@@ -227,5 +284,38 @@ public class CategoryForm {
 					mb.open();
 				}
 		}	
+	}
+	private void listUpdate(List list){	
+		ArrayList<String> arrName = new ArrayList<String>();
+		try{
+			Class.forName("org.h2.Driver");
+			conn = DriverManager.getConnection("jdbc:h2:file://C:\\Java\\menu;MV_STORE=FALSE", "sa", "");
+			stmp = conn.createStatement();
+			conn.setAutoCommit(false);		
+			String sql = "select * from category";
+			rs = stmp.executeQuery(sql);
+			while(rs.next())		
+				arrName.add(rs.getString("category_name"));
+			String[] ed = (String[]) arrName.toArray(new String[arrName.size()]);
+			list.setItems(ed);
+	        conn.commit();		
+		}
+		catch(SQLException | ClassNotFoundException e){
+			MessageBox mb = new MessageBox(shell);
+			mb.setMessage("Не могу открыть файл");
+			mb.open();
+		}
+		finally{
+			if (conn!= null)
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					MessageBox mb = new MessageBox(shell);
+					mb.setMessage("Соединение уже закрыто");
+					mb.open();
+				}
+		}	
+		
 	}
 }
